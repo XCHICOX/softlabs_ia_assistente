@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Chatbot Sabiá</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #chat-container {
+            background: #fff;
+            width: 400px;
+            max-width: 90%;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        #chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .message {
+            padding: 10px 15px;
+            border-radius: 20px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        .user-message {
+            background: #007bff;
+            color: #fff;
+            align-self: flex-end;
+        }
+        .bot-message {
+            background: #e5e5ea;
+            color: #000;
+            align-self: flex-start;
+        }
+        #input-container {
+            display: flex;
+            border-top: 1px solid #ddd;
+        }
+        #pergunta {
+            flex: 1;
+            padding: 10px 15px;
+            border: none;
+            outline: none;
+            font-size: 16px;
+        }
+        #botaoEnviar {
+            background: #007bff;
+            color: #fff;
+            border: none;
+            padding: 0 20px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        #botaoEnviar:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="chat-messages"></div>
+        <div id="input-container">
+            <input type="text" id="pergunta" placeholder="Digite sua mensagem...">
+            <button id="botaoEnviar">Enviar</button>
+        </div>
+    </div>
+
+    <script>
+        function sendMessage() {
+            var pergunta = $('#pergunta').val().trim();
+            if (!pergunta) return;
+
+            // Adiciona a mensagem do usuário
+            $('#chat-messages').append('<div class="message user-message">' + pergunta + '</div>');
+            $('#pergunta').val(''); // limpa input
+            $('#chat-messages').scrollTop($('#chat-messages')[0].scrollHeight);
+
+            // Envia para o backend
+            $.ajax({
+                url: '/perguntar',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ pergunta: pergunta }),
+                success: function(data) {
+                    // pega a resposta da IA
+                    var resposta = data.mensagem || data.resposta || "Não houve resposta.";
+                    $('#chat-messages').append('<div class="message bot-message">' + resposta + '</div>');
+                    $('#chat-messages').scrollTop($('#chat-messages')[0].scrollHeight);
+                },
+                error: function(xhr, status, error) {
+                    $('#chat-messages').append('<div class="message bot-message">Ocorreu um erro ao processar sua pergunta.</div>');
+                    $('#chat-messages').scrollTop($('#chat-messages')[0].scrollHeight);
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            // clique no botão
+            $('#botaoEnviar').on('click', sendMessage);
+
+            // envio ao apertar Enter
+            $('#pergunta').on('keypress', function(e) {
+                if (e.which === 13) { // Enter
+                    sendMessage();
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
